@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+PROG=${0##*/}
+CLUSTERFILE="${HOME}/.clusterssh/clusters"
+COLUMNS="2"
+
+usage() {
+    echo "Usage: $PROG [options] <cluster>
+
+Cluster ssh using tmux. This differs from other similar scripts by
+allowing the user to define the layout by specifying the number of
+columns instead of just using the tmux \"tiled\" layout. The argument
+<cluster> is either a named cluster or the index correponding to one
+as provided by the -l/--list option.
+
+-s SSHOPTS Options to pass to ssh.
+
+-c N       Number of columns of panes.
+           Defaults to ${COLUMNS}.
+
+-f <file>  Location of the cluster configuration file.
+           Defaults to ${CLUSTERFILE}.
+
+-l ,--list List avaiable clusters
+
+-h, --help Print this scren.
+"
+}
+function listClusters {
+    local CLUSTERS
+    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ~/.clusterssh/clusters | awk '{print $1}'| tr '\n' ' ')
+    for (( i=0; i < ${#CLUSTERS[@]}; i++ )) ; do
+	printf "%2d. %s\n" $((i+1)) ${CLUSTERS[$i]}
+    done
+}
+function clusterByNumber {
+    local i=$1
+    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ~/.clusterssh/clusters | awk '{print $1}'| tr '\n' ' ')
+    echo ${CLUSTERS[$i]}
+}
+
+function calcPercent {
+    local i=$1
+    local n=$2
+    local num=$((n-i+1))
+    local dom=$((n-i+2))
+    echo "100 * $num / $dom" | bc
+}
+
+function mkSessionName {
+    local sn
+    for i in {00..99} ; do
+        sn=tcssh${i}
+        tmux has-session -t $sn 2> /dev/null || break
+        sn=""
+    done
+    if [ "$sn" = "" ] ; then
+        echo "Error: could not find avaiable session name" 1>&2
+        exit 0
+    fi
+    echo "$sn"
+}
+
+function main {
+    local harr
+    read -a harr <<< "$1"
+    local sshopts="$2"
+    local nc="$3"
+    local hindex=0
+    local nhosts=${#harr[@]}
+
+    # See if we already inside at tmux session
+    local sn=""
+    # Check if we are already in a tmux session
+    if [ "$TMUX" != "" ] ; then
+       sn=$(tmux display-message -p '#S')
+    fi
+    local wi=""
+
+    # Number of panes needs to be >= nhosts and divisible by the number of columns
+    local np
+    [[ $(($nhosts%$nc)) -eq 0 ]] && np=$nhosts || np=$(echo "$nhosts+$nc-$nhosts%$nc" | bc)
+    # Number of rows
+    local nr=$( expr $np / $nc )
+    # Loop over the panes
+    local tmuxopts tp per
+    for (( col=1; col<=nc ; col++ )) ; do
+	for (( row=1; row<=nr; row++ )) ; do
+	    if [[ $col -eq 1 && $row -eq 1 ]] ; then
+		if [ "$sn" != "" ] ; then
+		    # Use the current session
+		    tmuxopts="new-window -t $sn"
+		else
+		    # Make and use a new session
+		    sn=$(mkSessionName)
+		    tmuxopts="new-session -d -s $sn"
+		fi
+	    elif [ $col -eq 1 ] ; then
+		tp=$((row-1))
+		per=$(calcPercent $row $nr)
+		tmuxopts="split-window -t ${sn}:${wi}.${tp} -v -l ${per}%"
+	    else
+		tp=$((row*col-1))
+		per=$(calcPercent $col $nc)
+		tmuxopts="split-window -t ${sn}:${wi}.${tp} -h -l ${per}%"
+	    fi
+	    tmux $tmuxopts
+	    #ssh $sshopts ${harr[$((hindex++))]}
+	    if [ "$wi" = "" ] ; then
+		wi=$(tmux display-message -p '#{window_index}')
+	    fi
+	    ((npanes++))
+	    if [ $npanes -eq $nhosts ] ; then
+		break
+	    fi
+	done
+    done
+    tmux set-window-option -t $sn synchronize-panes on
+
+    if [ "$TMUX" = "" ] ; then
+	tmux attach -t $sn
+    fi
+}
+
+sshopts=""
+cluster=""
+while [ "$1" != "" ] ; do
+    case $1 in
+	-s)
+	    sshopts="$2"
+	    shift
+	    ;;
+	-c)
+	    COLUMNS="$2"
+	    shift
+	    ;;
+	-l|--list)
+	    listClusters
+	    exit 0
+	    ;;
+	-h|--help)
+	    usage
+	    exit 0
+	    ;;
+	*)
+	    cluster=$1
+	    shift
+	    if [[ $cluster =~ ^[0-9]+$ ]] ; then
+		
+		cluster=$(clusterByNumber $((--cluster)))
+	    fi
+	    ;;
+    esac
+    shift
+done
+
+if [ "$cluster" = "" ] ; then
+    usage
+    exit 1
+fi
+
+# Get hosts from cluster name
+hosts="$(sed -n < "${CLUSTERFILE}" "s/^$cluster //p")"
+if [ "$hosts" = "" ] ; then
+    echo "Cluster $cluster not found in $CLUSTERFILE"
+    exit 2
+fi
+main "$hosts" "$sshopts" "$COLUMNS"
