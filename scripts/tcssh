@@ -103,8 +103,7 @@ function main {
 		per=$(calcPercent $col $nc)
 		tmuxopts="split-window -t ${sn}:${wi}.${tp} -h -l ${per}%"
 	    fi
-	    tmux $tmuxopts
-	    #ssh $sshopts ${harr[$((hindex++))]}
+	    tmux $tmuxopts ssh $sshopts ${harr[$((hindex++))]}
 	    if [ "$wi" = "" ] ; then
 		wi=$(tmux display-message -p '#{window_index}')
 	    fi
