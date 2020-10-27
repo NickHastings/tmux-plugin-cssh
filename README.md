@@ -30,17 +30,17 @@ Options:
   -s SSHOPTS           Options to pass to ssh.
 
   -c N                 Number of columns of panes.
-                       Defaults to ${COLUMNS}.
+                       Defaults to 2.
 
   -f <file>            Location of the cluster configuration file.
-                       Defaults to ${CLUSTERFILE}.
+                       Defaults to ~/.clusterssh/clusters.
 
-  -l, --list           List available clusters Defaults to ${CLUSTERFILE}.
+  -l, --list           List available clusters.
 
   -e, --exclude <host> Host in cluster definition to exclude. Only 
-                       the short hostname is comapared.
+                       the short hostname is compared.
 
-  -h, --help            Print this screen.
+  -h, --help           Print this screen.
 ```
 
 ### Installation
@@ -59,7 +59,7 @@ The key binding can be changed with the `tmux_cssh_launch` variable. For example
 set -g @tmux_cssh_launch 'z'
 ```
 
-When launched you will be presented with a numberd list of clusters
+When launched you will be presented with a numbered list of clusters
 read from the configuration file. Choose which cluster to connect to
 by entering the correponding number (or its name) in to the tmux
 command-prompt. The number (or name) can be proceeded with any other
