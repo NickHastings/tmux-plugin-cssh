@@ -46,8 +46,7 @@ tmux-plugin-cssh. Once Tmux Plugin Manager is configured just add the following 
 ```
 set -g @plugin 'NickHastings/tmux-plugin-cssh'
 ```
-then instruct the plugin manager to install it `prefix` + <kbd>I</kbd> (uppercase I)
-```
+Then instruct the plugin manager to install it `prefix` + <kbd>I</kbd> (uppercase I)
 
 From tmux the tmux-plugin-cssh can be launched with  `prefix` + <kbd>C</kbd> (uppercase C).
 The key binding can be changed with the `tmux_cssh_launch` variable. For example
