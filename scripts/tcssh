@@ -32,14 +32,14 @@ Options:
 }
 function listClusters {
     local CLUSTERS
-    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ~/.clusterssh/clusters | awk '{print $1}'| tr '\n' ' ')
+    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ${CLUSTERFILE} | awk '{print $1}'| tr '\n' ' ')
     for (( i=0; i < ${#CLUSTERS[@]}; i++ )) ; do
 	printf "%2d. %s\n" $((i+1)) ${CLUSTERS[$i]}
     done
 }
 function clusterByNumber {
     local i=$1
-    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ~/.clusterssh/clusters | awk '{print $1}'| tr '\n' ' ')
+    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ${CLUSTERFILE} '{print $1}'| tr '\n' ' ')
     echo ${CLUSTERS[$i]}
 }
 
