@@ -24,7 +24,7 @@ Options:
 
   -l, --list           List available clusters Defaults to ${CLUSTERFILE}.
 
-  -e, --exclude <host> Host in cluster definition to exclude. Only 
+  -e, --exclude <host> Host in cluster definition to exclude. Only
                        the short hostname is comapared.
 
   -h, --help           Print this screen.
@@ -37,6 +37,7 @@ function listClusters {
 	printf "%2d. %s\n" $((i+1)) ${CLUSTERS[$i]}
     done
 }
+
 function clusterByNumber {
     local i=$1
     read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ${CLUSTERFILE} '{print $1}'| tr '\n' ' ')
@@ -70,7 +71,7 @@ function mkWindowIndex {
     local warr
     read -a warr <<< $(tmux list-windows | cut -f1 -d: | tr '\n' ' ')
 
-    # Loop over possible window indices to find one that is no already
+    # Loop over possible window indices to find one that is not already
     # used.
     for i in {1..99} ; do
 	local ok=1
@@ -96,9 +97,8 @@ function main {
     local nc="$3"
     local hindex=0
     local nhosts=${#harr[@]}
-
-    # See if we already inside at tmux session
     local sn=""
+
     # Check if we are already in a tmux session
     if [ "$TMUX" != "" ] ; then
        sn=$(tmux display-message -p '#S')
@@ -143,8 +143,8 @@ function main {
 	    fi
 	done
     done
-    tmux rename-window $cluster
 
+    tmux rename-window $cluster
     tmux set-window-option -t $sn synchronize-panes on
 
     if [ "$TMUX" = "" ] ; then
@@ -181,7 +181,6 @@ while [ "$1" != "" ] ; do
 	    cluster=$1
 	    shift
 	    if [[ $cluster =~ ^[0-9]+$ ]] ; then
-
 		cluster=$(clusterByNumber $((--cluster)))
 	    fi
 	    ;;
