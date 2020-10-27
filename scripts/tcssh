@@ -40,7 +40,7 @@ function listClusters {
 
 function clusterByNumber {
     local i=$1
-    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ${CLUSTERFILE} '{print $1}'| tr '\n' ' ')
+    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ${CLUSTERFILE} | awk '{print $1}'| tr '\n' ' ')
     echo ${CLUSTERS[$i]}
 }
 
