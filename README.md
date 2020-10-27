@@ -31,7 +31,7 @@ useful to define a keybinding to toggle this option on and off.
            Defaults to 2.
 
 -f <file>  Location of the cluster configuration file.
-           Defaults to /home/hastings/.clusterssh/clusters.
+           Defaults to ${HOME}/.clusterssh/clusters.
 
 -l, --list List available clusters
 
