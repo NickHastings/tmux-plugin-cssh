@@ -12,17 +12,22 @@ columns instead of just using the tmux \"tiled\" layout. The argument
 <cluster> is either a named cluster or the index corresponding to one
 as provided by the -l/--list option.
 
--s SSHOPTS Options to pass to ssh.
+Options:
 
--c N       Number of columns of panes.
-           Defaults to ${COLUMNS}.
+  -s SSHOPTS           Options to pass to ssh.
 
--f <file>  Location of the cluster configuration file.
-           Defaults to ${CLUSTERFILE}.
+  -c N                 Number of columns of panes.
+                       Defaults to ${COLUMNS}.
 
--l, --list List available clusters
+  -f <file>            Location of the cluster configuration file.
+                       Defaults to ${CLUSTERFILE}.
 
--h, --help Print this screen.
+  -l, --list           List available clusters Defaults to ${CLUSTERFILE}.
+
+  -e, --exclude <host> Host in cluster definition to exclude. Only 
+                       the short hostname is comapared.
+
+  -h, --help           Print this screen.
 "
 }
 function listClusters {
@@ -149,6 +154,7 @@ function main {
 
 sshopts=""
 cluster=""
+declare -a excludes
 while [ "$1" != "" ] ; do
     case $1 in
 	-s)
@@ -162,6 +168,10 @@ while [ "$1" != "" ] ; do
 	-l|--list)
 	    listClusters
 	    exit 0
+	    ;;
+	-e|--exclude)
+	    excludes+=("$2")
+	    shift
 	    ;;
 	-h|--help)
 	    usage
@@ -190,4 +200,20 @@ if [ "$hosts" = "" ] ; then
     echo "Cluster $cluster not found in $CLUSTERFILE"
     exit 2
 fi
-main "$hosts" "$sshopts" "$COLUMNS"
+
+# Remove excluded hosts
+wantedhosts=""
+for host in $hosts ; do
+    exclude=""
+    for exhost in "${excludes[@]}" ; do
+	if [ "${exhost%%.*}" = "${host%%.*}" ] ; then
+	    exclude=1
+	    break
+	fi
+    done
+    if [ "$exclude" = "" ] ; then
+	wantedhosts="${wantedhosts}${host} "
+    fi
+done
+
+main "$wantedhosts" "$sshopts" "$COLUMNS"

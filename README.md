@@ -25,17 +25,22 @@ launched within tmux with the use of a keybinding.
 The synchronize-panes tmux option will be turned on. Users may find it
 useful to define a keybinding to toggle this option on and off.
 
--s SSHOPTS Options to pass to ssh.
+Options:
 
--c N       Number of columns of panes.
-           Defaults to 2.
+  -s SSHOPTS           Options to pass to ssh.
 
--f <file>  Location of the cluster configuration file.
-           Defaults to ${HOME}/.clusterssh/clusters.
+  -c N                 Number of columns of panes.
+                       Defaults to ${COLUMNS}.
 
--l, --list List available clusters
+  -f <file>            Location of the cluster configuration file.
+                       Defaults to ${CLUSTERFILE}.
 
--h, --help Print this screen
+  -l, --list           List available clusters Defaults to ${CLUSTERFILE}.
+
+  -e, --exclude <host> Host in cluster definition to exclude. Only 
+                       the short hostname is comapared.
+
+  -h, --help            Print this screen.
 ```
 
 ### Installation
