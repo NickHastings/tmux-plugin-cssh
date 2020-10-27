@@ -9,7 +9,7 @@ usage() {
 Cluster ssh using tmux. This differs from other similar scripts by
 allowing the user to define the layout by specifying the number of
 columns instead of just using the tmux \"tiled\" layout. The argument
-<cluster> is either a named cluster or the index correponding to one
+<cluster> is either a named cluster or the index corresponding to one
 as provided by the -l/--list option.
 
 -s SSHOPTS Options to pass to ssh.
@@ -20,9 +20,9 @@ as provided by the -l/--list option.
 -f <file>  Location of the cluster configuration file.
            Defaults to ${CLUSTERFILE}.
 
--l, --list List avaiable clusters
+-l, --list List available clusters
 
--h, --help Print this scren.
+-h, --help Print this screen.
 "
 }
 function listClusters {
