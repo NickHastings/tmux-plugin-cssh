@@ -20,7 +20,7 @@ as provided by the -l/--list option.
 -f <file>  Location of the cluster configuration file.
            Defaults to ${CLUSTERFILE}.
 
--l ,--list List avaiable clusters
+-l, --list List avaiable clusters
 
 -h, --help Print this scren.
 "
