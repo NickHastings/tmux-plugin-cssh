@@ -54,10 +54,34 @@ function mkSessionName {
         sn=""
     done
     if [ "$sn" = "" ] ; then
-        echo "Error: could not find avaiable session name" 1>&2
-        exit 0
+        echo "Error: could not find free session name" 1>&2
+        exit 1
     fi
     echo "$sn"
+}
+
+function mkWindowIndex {
+    # Get list of all the windows in this session
+    local warr
+    read -a warr <<< $(tmux list-windows | cut -f1 -d: | tr '\n' ' ')
+
+    # Loop over possible window indices to find one that is no already
+    # used.
+    for i in {1..99} ; do
+	local ok=1
+	for j in "${warr[@]}" ;do
+	    if [ "$i" = "$j" ] ; then
+		ok=0
+		continue
+	    fi
+	done
+	if [ "$ok" = "1" ]; then
+	    echo "$i"
+	    return 0
+	fi
+    done
+    echo "Can not find free window name." 1>&2
+    exit 1
 }
 
 function main {
@@ -88,7 +112,8 @@ function main {
 	    if [[ $col -eq 1 && $row -eq 1 ]] ; then
 		if [ "$sn" != "" ] ; then
 		    # Use the current session
-		    tmuxopts="new-window -t $sn"
+		    wi=$(mkWindowIndex)
+		    tmuxopts="new-window -t ${sn}:${wi}"
 		else
 		    # Make and use a new session
 		    sn=$(mkSessionName)
