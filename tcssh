@@ -29,7 +29,7 @@ Options:
   -f <file>            Location of the cluster configuration file.
                        Defaults to ${CLUSTERFILE}.
 
-  -l, --list           List available clusters Defaults to ${CLUSTERFILE}.
+  -l, --list           List available clusters.
 
   -m, --menu           Open tmux menu of clusters (run inside tmux session).
 

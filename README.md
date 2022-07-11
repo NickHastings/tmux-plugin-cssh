@@ -37,6 +37,8 @@ Options:
 
   -l, --list           List available clusters.
 
+  -m, --menu           Open tmux menu of clusters (run inside tmux session).
+
   -e, --exclude <host> Host in cluster definition to exclude. Only 
                        the short hostname is compared.
 
@@ -59,8 +61,6 @@ The key binding can be changed with the `tmux_cssh_launch` variable. For example
 set -g @tmux_cssh_launch 'z'
 ```
 
-When launched you will be presented with a numbered list of clusters
-read from the configuration file. Choose which cluster to connect to
-by entering the correponding number (or its name) in to the tmux
-command-prompt. The number (or name) can be proceeded with any other
-options you wish to pass to tcssh.
+When launched you will be presented with a menu of clusters read from
+the configuration file. Select the desired cluster to ssh to its
+hosts.
