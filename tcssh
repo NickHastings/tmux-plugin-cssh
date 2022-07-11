@@ -52,7 +52,7 @@ function clusterMenu {
     local args
     for (( i=0; i < ${#CLUSTERS[@]}; i++ )) ; do
         args+=("${CLUSTERS[$i]}")
-        args+=("")
+        args+=("$i")
         args+=("run \"${SCRIPT_PATH} $((i+1))\"")
     done
     tmux display-menu -T "Cluster SSH" "${args[@]}"
