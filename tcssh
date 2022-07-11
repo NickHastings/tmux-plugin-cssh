@@ -2,6 +2,13 @@
 PROG=${0##*/}
 CLUSTERFILE="${HOME}/.clusterssh/clusters"
 COLUMNS="2"
+SCRIPT_PATH="${BASH_SOURCE}"
+while [ -L "${SCRIPT_PATH}" ]; do
+  SCRIPT_DIR="$(cd -P "$(dirname "${SCRIPT_PATH}")" >/dev/null 2>&1 && pwd)"
+  SCRIPT_PATH="$(readlink "${SCRIPT_PATH}")"
+  [[ ${SCRIPT_PATH} != /* ]] && SCRIPT_PATH="${SCRIPT_DIR}/${SCRIPT_PATH}"
+done
+SCRIPT_PATH="$(readlink -f "${SCRIPT_PATH}")"
 
 usage() {
     echo "Usage: $PROG [options] <cluster>
@@ -24,6 +31,8 @@ Options:
 
   -l, --list           List available clusters Defaults to ${CLUSTERFILE}.
 
+  -m, --menu           Open tmux menu of clusters (run inside tmux session).
+
   -e, --exclude <host> Host in cluster definition to exclude. Only
                        the short hostname is comapared.
 
@@ -32,21 +41,32 @@ Options:
 }
 function listClusters {
     local CLUSTERS
-    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ${CLUSTERFILE} | awk '{print $1}'| tr '\n' ' ')
+    read -ra CLUSTERS <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
     for (( i=0; i < ${#CLUSTERS[@]}; i++ )) ; do
-	printf "%2d. %s\n" $((i+1)) ${CLUSTERS[$i]}
+	printf "%2d. %s\n" $((i+1)) "${CLUSTERS[$i]}"
     done
+}
+function clusterMenu {
+    local CLUSTERS
+    read -ra CLUSTERS <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
+    local args
+    for (( i=0; i < ${#CLUSTERS[@]}; i++ )) ; do
+        args+=("${CLUSTERS[$i]}")
+        args+=("")
+        args+=("run \"${SCRIPT_PATH} $((i+1))\"")
+    done
+    tmux display-menu -T "Cluster SSH" "${args[@]}"
 }
 
 function clusterByNumber {
     local i=$1
-    read -a CLUSTERS <<< $(grep '^[[:blank:]]*[^[:blank:]#;]' ${CLUSTERFILE} | awk '{print $1}'| tr '\n' ' ')
+    read -ra CLUSTERS <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
     if [[ $i -lt 1 || $i -gt ${#CLUSTERS[@]} ]] ; then
 	echo "Invalid cluster index $1." 1>&2
 	echo "None"
         return 1
     fi
-    echo ${CLUSTERS[$(($i-1))]}
+    echo "${CLUSTERS[$((i-1))]}"
     return 0
 }
 
@@ -75,7 +95,7 @@ function mkSessionName {
 function mkWindowIndex {
     # Get list of all the windows in this session
     local warr
-    read -a warr <<< $(tmux list-windows | cut -f1 -d: | tr '\n' ' ')
+    read -ra warr <<< "$(tmux list-windows | cut -f1 -d: | tr '\n' ' ')"
 
     # Loop over possible window indices to find one that is not already
     # used.
@@ -98,7 +118,7 @@ function mkWindowIndex {
 
 function main {
     local harr
-    read -a harr <<< "$1"
+    read -ra harr <<< "$1"
     local sshopts="$2"
     local nc="$3"
     local hindex=0
@@ -113,9 +133,10 @@ function main {
 
     # Number of panes needs to be >= nhosts and divisible by the number of columns
     local np
-    [[ $(($nhosts%$nc)) -eq 0 ]] && np=$nhosts || np=$(echo "$nhosts+$nc-$nhosts%$nc" | bc)
+    [[ $((nhosts%nc)) -eq 0 ]] && np=$nhosts || np=$(echo "$nhosts+$nc-$nhosts%$nc" | bc)
     # Number of rows
-    local nr=$( expr $np / $nc )
+    local nr
+    nr=$( expr "$np" / "$nc" )
     # Loop over the panes
     local tmuxopts tp per
     for (( col=1; col<=nc ; col++ )) ; do
@@ -130,13 +151,13 @@ function main {
 		    sn=$(mkSessionName)
 		    tmuxopts="new-session -d -s $sn"
 		fi
-	    elif [ $col -eq 1 ] ; then
+	    elif [ "$col" -eq "1" ] ; then
 		tp=$((row-1))
-		per=$(calcPercent $row $nr)
+		per=$(calcPercent "$row" "$nr")
 		tmuxopts="split-window -t ${sn}:${wi}.${tp} -v -l ${per}%"
 	    else
 		tp=$((row*col-1))
-		per=$(calcPercent $col $nc)
+		per=$(calcPercent "$col" "$nc")
 		tmuxopts="split-window -t ${sn}:${wi}.${tp} -h -l ${per}%"
 	    fi
 	    tmux $tmuxopts ssh $sshopts ${harr[$((hindex++))]}
@@ -144,17 +165,17 @@ function main {
 		wi=$(tmux display-message -p '#{window_index}')
 	    fi
 	    ((npanes++))
-	    if [ $npanes -eq $nhosts ] ; then
+	    if [ "$npanes" -eq "$nhosts" ] ; then
 		break
 	    fi
 	done
     done
 
-    tmux rename-window $cluster
+    tmux rename-window "$cluster"
     tmux set-window-option -t $sn synchronize-panes on
 
     if [ "$TMUX" = "" ] ; then
-	tmux attach -t $sn
+	tmux attach -t "$sn"
     fi
 }
 
@@ -174,6 +195,10 @@ while [ "$1" != "" ] ; do
 	-l|--list)
 	    listClusters
 	    exit 0
+            ;;
+	-m|--menu)
+	    clusterMenu
+	    exit 0
 	    ;;
 	-e|--exclude)
 	    excludes+=("$2")
@@ -187,6 +212,10 @@ while [ "$1" != "" ] ; do
 	    cluster=$1
 	    shift
 	    if [[ $cluster =~ ^[0-9]+$ ]] ; then
+                #if ! clusterByNumber $((cluster)) ; then
+                #    exit 1
+                #fi
+
 		cluster=$(clusterByNumber $((cluster)))
 		if [ "$?" != "0" ] ; then
 		    exit $?

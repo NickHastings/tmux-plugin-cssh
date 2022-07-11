@@ -8,4 +8,4 @@ if [ -z "$LAUNCH_KEY" ]; then
     LAUNCH_KEY="C"
 fi
 
-tmux bind-key "$LAUNCH_KEY" "run-shell $CURRENT_DIR/scripts/launch.sh"
+tmux bind "$LAUNCH_KEY" "run-shell -b \"$CURRENT_DIR/tcssh --menu\""
