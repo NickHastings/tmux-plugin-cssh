@@ -40,18 +40,18 @@ Options:
 "
 }
 function listClusters {
-    local CLUSTERS
-    read -ra CLUSTERS <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
-    for (( i=0; i < ${#CLUSTERS[@]}; i++ )) ; do
-	printf "%2d. %s\n" $((i+1)) "${CLUSTERS[$i]}"
+    local clusters
+    read -ra clusters <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
+    for (( i=0; i < ${#clusters[@]}; i++ )) ; do
+	printf "%2d. %s\n" $((i+1)) "${clusters[$i]}"
     done
 }
 function clusterMenu {
-    local CLUSTERS
-    read -ra CLUSTERS <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
+    local clusters
+    read -ra clusters <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
     local args
-    for (( i=0; i < ${#CLUSTERS[@]}; i++ )) ; do
-        args+=("${CLUSTERS[$i]}")
+    for (( i=0; i < ${#clusters[@]}; i++ )) ; do
+        args+=("${clusters[$i]}")
         args+=("$i")
         args+=("run \"${SCRIPT_PATH} $((i+1))\"")
     done
@@ -60,13 +60,14 @@ function clusterMenu {
 
 function clusterByNumber {
     local i=$1
-    read -ra CLUSTERS <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
-    if [[ $i -lt 1 || $i -gt ${#CLUSTERS[@]} ]] ; then
+    local clusters
+    read -ra clusters <<< "$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}'| tr '\n' ' ')"
+    if [[ $i -lt 1 || $i -gt ${#clusters[@]} ]] ; then
 	echo "Invalid cluster index $1." 1>&2
 	echo "None"
         return 1
     fi
-    echo "${CLUSTERS[$((i-1))]}"
+    echo "${clusters[$((i-1))]}"
     return 0
 }
 
