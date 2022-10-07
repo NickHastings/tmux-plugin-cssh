@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 PROG=${0##*/}
+DEBUG=0
 CLUSTERFILE="${HOME}/.clusterssh/clusters"
 COLUMNS="2"
-SCRIPT_PATH="${BASH_SOURCE}"
+SCRIPT_PATH="${BASH_SOURCE[0]}"
 while [ -L "${SCRIPT_PATH}" ]; do
   SCRIPT_DIR="$(cd -P "$(dirname "${SCRIPT_PATH}")" >/dev/null 2>&1 && pwd)"
   SCRIPT_PATH="$(readlink "${SCRIPT_PATH}")"
@@ -38,6 +39,12 @@ Options:
 
   -h, --help           Print this screen.
 "
+}
+function log {
+    if [ "$DEBUG" = "0" ] ; then
+        return
+    fi
+    logger -t "${PROG}" -- "$@"
 }
 function listClusters {
     local clusters
@@ -118,9 +125,14 @@ function mkWindowIndex {
 }
 
 function main {
+    log "main()"
     local harr
     read -ra harr <<< "$1"
-    local sshopts="$2"
+    log "harr =" "${harr[@]}"
+    local sshopts
+    read -ra sshopts <<< "$2"
+    log "sshopts =" "${sshopts[@]}"
+
     local nc="$3"
     local hindex=0
     local nhosts=${#harr[@]}
@@ -137,7 +149,9 @@ function main {
     [[ $((nhosts%nc)) -eq 0 ]] && np=$nhosts || np=$(echo "$nhosts+$nc-$nhosts%$nc" | bc)
     # Number of rows
     local nr
-    nr=$( expr "$np" / "$nc" )
+    nr=$((np/nc))
+
+    log "nhosts = ${nhosts}, np = ${np}, nc = ${nc}, nr = ${nr}"
     # Loop over the panes
     local tmuxopts tp per
     for (( col=1; col<=nc ; col++ )) ; do
@@ -146,22 +160,22 @@ function main {
 		if [ "$sn" != "" ] ; then
 		    # Use the current session
 		    wi=$(mkWindowIndex)
-		    tmuxopts="new-window -t ${sn}:${wi}"
+		    tmuxopts=("new-window" "-t" "${sn}:${wi}")
 		else
 		    # Make and use a new session
 		    sn=$(mkSessionName)
-		    tmuxopts="new-session -d -s $sn"
+		    tmuxopts=("new-session" "-d" "-s" "$sn")
 		fi
 	    elif [ "$col" -eq "1" ] ; then
 		tp=$((row-1))
 		per=$(calcPercent "$row" "$nr")
-		tmuxopts="split-window -t ${sn}:${wi}.${tp} -v -l ${per}%"
+		tmuxopts=("split-window" "-t" "${sn}:${wi}.${tp}" "-v" "-l" "${per}%")
 	    else
 		tp=$((row*col-1))
 		per=$(calcPercent "$col" "$nc")
-		tmuxopts="split-window -t ${sn}:${wi}.${tp} -h -l ${per}%"
+		tmuxopts=("split-window" "-t" "${sn}:${wi}.${tp}" "-h" "-l" "${per}%")
 	    fi
-	    tmux $tmuxopts ssh $sshopts ${harr[$((hindex++))]}
+	    tmux "${tmuxopts[@]}" ssh "${sshopts[@]}" "${harr[$((hindex++))]}"
 	    if [ "$wi" = "" ] ; then
 		wi=$(tmux display-message -p '#{window_index}')
 	    fi
@@ -172,21 +186,21 @@ function main {
 	done
     done
 
-    tmux rename-window "$cluster"
-    tmux set-window-option -t $sn synchronize-panes on
+    tmux rename-window "$CLUSTER"
+    tmux set-window-option -t "$sn" synchronize-panes on
 
     if [ "$TMUX" = "" ] ; then
 	tmux attach -t "$sn"
     fi
 }
 
-sshopts=""
-cluster=""
+SSHOPTS=""
+CLUSTER=""
 declare -a excludes
 while [ "$1" != "" ] ; do
     case $1 in
 	-s)
-	    sshopts="$2"
+	    SSHOPTS="$2"
 	    shift
 	    ;;
 	-c)
@@ -205,19 +219,18 @@ while [ "$1" != "" ] ; do
 	    excludes+=("$2")
 	    shift
 	    ;;
+	-d|--debug)
+	    DEBUG=1
+	    ;;
 	-h|--help)
 	    usage
 	    exit 0
 	    ;;
 	*)
-	    cluster=$1
+	    CLUSTER=$1
 	    shift
-	    if [[ $cluster =~ ^[0-9]+$ ]] ; then
-                #if ! clusterByNumber $((cluster)) ; then
-                #    exit 1
-                #fi
-
-		cluster=$(clusterByNumber $((cluster)))
+	    if [[ $CLUSTER =~ ^[0-9]+$ ]] ; then
+		CLUSTER=$(clusterByNumber $((CLUSTER)))
 		if [ "$?" != "0" ] ; then
 		    exit $?
 		fi
@@ -227,15 +240,15 @@ while [ "$1" != "" ] ; do
     shift
 done
 
-if [ "$cluster" = "" ] ; then
+if [ "$CLUSTER" = "" ] ; then
     usage
     exit 1
 fi
 
 # Get hosts from cluster name
-hosts="$(sed -n < "${CLUSTERFILE}" "s/^$cluster //p")"
+hosts="$(sed -n < "${CLUSTERFILE}" "s/^$CLUSTER //p")"
 if [ "$hosts" = "" ] ; then
-    echo "Cluster $cluster not found in $CLUSTERFILE" 1>&2
+    echo "Cluster $CLUSTER not found in $CLUSTERFILE" 1>&2
     exit 2
 fi
 
@@ -254,4 +267,4 @@ for host in $hosts ; do
     fi
 done
 
-main "$wantedhosts" "$sshopts" "$COLUMNS"
+main "$wantedhosts" "$SSHOPTS" "$COLUMNS"
