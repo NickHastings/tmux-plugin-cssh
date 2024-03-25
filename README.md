@@ -2,9 +2,18 @@
 
 Cluster ssh using tmux. This differs from other similar scripts by
 allowing the user to define the layout by specifying the number of
-columns instead of just using the tmux "tiled" layout. Clusters are
-defined in the users ~/.clusterssh/clusters file.
+columns instead of just using the tmux "tiled" layout.
 
+Clusters are defined in the users ~/.clusterssh/clusters file as is the case for
+[clusterssh](https://github.com/duncs/clusterssh/wiki). The format
+is one cluster per line in the format:
+```
+clustername host1 host2 host3 ...
+```
+Usernames can optionally be prepended to the host name. Eg:
+```
+clustername user@host1 otheruser@host2 host3 ...
+```
 ### Usage
 
 ```
