@@ -90,7 +90,7 @@ function mkSessionName {
     local sn
     for i in {00..99} ; do
         sn=tcssh${i}
-        tmux has-session -t $sn 2> /dev/null || break
+        tmux has-session -t "$sn" 2> /dev/null || break
         sn=""
     done
     if [ "$sn" = "" ] ; then
