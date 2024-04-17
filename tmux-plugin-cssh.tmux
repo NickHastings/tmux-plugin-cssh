@@ -9,3 +9,4 @@ if [ -z "$LAUNCH_KEY" ]; then
 fi
 
 tmux bind "$LAUNCH_KEY" "run-shell -b \"$CURRENT_DIR/tcssh --menu\""
+tmux set-option -g pane-base-index 1
