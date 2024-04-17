@@ -47,7 +47,7 @@ function log {
     if [ "$DEBUG" = "0" ]; then
         return
     fi
-    logger -t "${PROG}" -- "$@"
+    logger -t "${PROG}" -p user.debug "$@"
 }
 function listClusters {
     local clusters
