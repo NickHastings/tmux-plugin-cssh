@@ -15,24 +15,15 @@ Usernames can optionally be prepended to the host name. Eg:
 clustername user@host1 otheruser@host2 host3 ...
 ```
 ### Usage
-
 ```
-Usage: tcssh [options] <cluster>
+Usage: tcssh [options] [host1 [host2 [host3... ]]]
 
 Cluster ssh using tmux. This differs from other similar scripts by
 allowing the user to define the layout by specifying the number of
-columns instead of just using the tmux "tiled" layout. The argument
-<cluster> is either a named cluster or the index corresponding to one
-as provided by the -l/--list option.
-
-The tcssh script can be run directly from the command line. If already
-in a tmux session a new tmux window will be spawned for the ssh
-sessions. If not already in a tmux session a new tmux session will be
-created. Alternatively, if installed as a tmux-plugin it can be
-launched within tmux with the use of a keybinding.
-
-The synchronize-panes tmux option will be turned on. Users may find it
-useful to define a keybinding to toggle this option on and off.
+columns instead of just using the tmux "tiled" layout. The hosts 
+to ssh to can either be explicitly given on the commandline or by
+the cluster index with the -i/--cluster-index option. The cluster
+index can be optained with the -l/--list option.
 
 Options:
 
@@ -42,17 +33,19 @@ Options:
                        Defaults to 2.
 
   -f <file>            Location of the cluster configuration file.
-                       Defaults to ~/.clusterssh/clusters.
+                       Defaults to /home/hastings/.clusterssh/clusters.
 
   -l, --list           List available clusters.
 
+  -i, --cluster-index  Index of the  desired cluster
+
   -m, --menu           Open tmux menu of clusters (run inside tmux session).
 
-  -e, --exclude <host> Host in cluster definition to exclude. Only 
-                       the short hostname is compared.
+  -e, --exclude <host> Host in cluster definition to exclude. Only
+                       the short hostname is comapared.
 
   -h, --help           Print this screen.
-```
+````
 
 ### Installation
 
@@ -70,6 +63,10 @@ The key binding can be changed with the `tmux_cssh_launch` variable. For example
 set -g @tmux_cssh_launch 'z'
 ```
 
-When launched you will be presented with a menu of clusters read from
-the configuration file. Select the desired cluster to ssh to its
-hosts.
+When launched this way within tmux you will be presented with a menu of clusters
+read from the configuration file. Select the desired cluster to ssh to its hosts.
+
+The number of columns can optinally be set in the tmux.conf. For example
+```
+set -g @tmux_cssh_columns 3
+```
