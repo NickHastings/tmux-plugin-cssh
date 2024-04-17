@@ -2,7 +2,7 @@
 PROG=${0##*/}
 DEBUG=0
 CLUSTERFILE="${HOME}/.clusterssh/clusters"
-COLUMNS="2"
+NCOL="2"
 SCRIPT_PATH="${BASH_SOURCE[0]}"
 while [ -L "${SCRIPT_PATH}" ]; do
     SCRIPT_DIR="$(cd -P "$(dirname "${SCRIPT_PATH}")" >/dev/null 2>&1 && pwd)"
@@ -25,7 +25,7 @@ Options:
   -s SSHOPTS           Options to pass to ssh.
 
   -c N                 Number of columns of panes.
-                       Defaults to ${COLUMNS}.
+                       Defaults to 2.
 
   -f <file>            Location of the cluster configuration file.
                        Defaults to ${CLUSTERFILE}.
@@ -124,6 +124,16 @@ function mkWindowIndex {
     exit 1
 }
 
+function readConfig {
+    local columns=""
+    log "Reading config"
+    columns="$(tmux show-option -gv '@tmux_cssh_columns')"
+    log "Got columns = ${columns} from config"
+    if [ "$columns" != "" ]; then
+        NCOL="$columns"
+        log "Set NCOL to $columns"
+    fi
+}
 function main {
     log "main()"
     local harr
@@ -133,7 +143,8 @@ function main {
     read -ra sshopts <<< "$2"
     log "sshopts =" "${sshopts[@]}"
 
-    local nc="$3"
+    local nc="$NCOL"
+    log "nc = $nc"
     local hindex=0
     local nhosts=${#harr[@]}
     local sn=""
@@ -196,6 +207,7 @@ function main {
 
 SSHOPTS=""
 CLUSTER=""
+readConfig
 declare -a excludes
 while [ "$1" != "" ] ; do
     case $1 in
@@ -267,4 +279,4 @@ for host in $hosts ; do
     fi
 done
 
-main "$wantedhosts" "$SSHOPTS" "$COLUMNS"
+main "$WANTEDHOSTS" "$SSHOPTS"
