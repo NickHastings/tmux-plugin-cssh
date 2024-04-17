@@ -70,3 +70,5 @@ The number of columns can optinally be set in the tmux.conf. For example
 ```
 set -g @tmux_cssh_columns 3
 ```
+## Licensing
+tmux-plugin-cssh is released under the GNU General Public License v3.0 only.
