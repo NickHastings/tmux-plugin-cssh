@@ -194,7 +194,7 @@ function main {
                 wi=$(tmux display-message -p '#{window_index}')
             fi
             ((npanes++))
-            if [ "$npanes" -eq "$nHOSTS" ]; then
+            if [ "$npanes" -eq "$nhosts" ]; then
                 break
             fi
         done
