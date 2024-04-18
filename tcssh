@@ -28,7 +28,7 @@ done
 SCRIPT_PATH="$(readlink -f "${SCRIPT_PATH}")"
 
 usage() {
-    echo "Usage: $PROG [options] <cluster|host1 [host2 [host3... ]]>
+    echo "Usage: ${PROG} [options] <cluster|host1 [host2 [host3... ]]>
 
 Cluster ssh using tmux. This differs from other similar scripts by
 allowing the user to define the layout by specifying the number of
@@ -67,7 +67,7 @@ function listClusters {
     local clusters
     read -ra clusters <<<"$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CONFIG["cluster_file"]}" | awk '{print $1}' | tr '\n' ' ')"
     for ((i = 0; i < ${#clusters[@]}; i++)); do
-        printf "%2d. %s\n" $((i + 1)) "${clusters[$i]}"
+        printf "%2d. %s\n" $((i + 1)) "${clusters[${i}]}"
     done
 }
 function clusterMenu {
@@ -76,7 +76,7 @@ function clusterMenu {
     local args
     declare -a keys=({1..9} 0 {a..z})
     for ((i = 0; i < ${#clusters[@]}; i++)); do
-        args+=("${clusters[$i]}")
+        args+=("${clusters[i]}")
         args+=("${keys[i]}")
         args+=("run \"${SCRIPT_PATH} $((i + 1))\"")
     done
@@ -101,21 +101,21 @@ function calcPercent {
     local n=$2
     local num=$((n - i + 1))
     local dom=$((n - i + 2))
-    echo "100 * $num / $dom" | bc
+    echo "100 * ${num} / ${dom}" | bc
 }
 
 function mkSessionName {
     local sn
     for i in {00..99}; do
         sn=tcssh${i}
-        tmux has-session -t "$sn" 2>/dev/null || break
+        tmux has-session -t "${sn}" 2>/dev/null || break
         sn=""
     done
-    if [ "$sn" = "" ]; then
+    if [ "${sn}" = "" ]; then
         echo "Error: could not find free session name" 1>&2
         exit 1
     fi
-    echo "$sn"
+    echo "${sn}"
 }
 
 function mkWindowIndex {
@@ -128,13 +128,13 @@ function mkWindowIndex {
     for i in {1..99}; do
         local ok=1
         for j in "${warr[@]}"; do
-            if [ "$i" = "$j" ]; then
+            if [ "${i}" = "${j}" ]; then
                 ok=0
                 continue
             fi
         done
-        if [ "$ok" = "1" ]; then
-            echo "$i"
+        if [ "${ok}" = "1" ]; then
+            echo "${i}"
             return 0
         fi
     done
@@ -147,13 +147,13 @@ function readConfig {
     log "Reading config"
     for key in "${!CONFIG[@]}" ; do
         value="$(tmux show-option -gv "@tmux_cssh_${key}" 2>/dev/null)"
-        log "Got $key = $value from config"
+        log "Got ${key} = ${value} from config"
         # If substring "file" is in variable expand ~ to $HOME
-        if [[ "$key" == *"file"* ]]; then
-            value="${value/#~/$HOME}"
+        if [[ "${key}" == *"file"* ]]; then
+            value="${value/#~/${HOME}}"
         fi
-        if [ "$value" != "" ]; then
-            CONFIG["${key}"]="$value"
+        if [ "${value}" != "" ]; then
+            CONFIG["${key}"]="${value}"
             value=""
         fi
     done
@@ -168,23 +168,23 @@ function main {
     log "sshopts =" "${sshopts[@]}"
 
     local nc="${CONFIG["columns"]}"
-    log "nc = $nc"
+    log "nc = ${nc}"
     local hindex=0
     local nhosts=${#harr[@]}
-    if [ "$nhosts" -lt "$nc" ]; then
-        nc=$nhosts
+    if [ "${nhosts}" -lt "${nc}" ]; then
+        nc=${nhosts}
     fi
     local sn=""
 
     # Check if we are already in a tmux session
-    if [ "$TMUX" != "" ]; then
+    if [ "${TMUX}" != "" ]; then
         sn=$(tmux display-message -p '#S')
     fi
     local wi=""
 
     # Number of panes needs to be >= nhosts and divisible by the number of columns
     local np
-    [[ $((nhosts % nc)) -eq 0 ]] && np=$nhosts || np=$(echo "$nhosts+$nc-$nhosts%$nc" | bc)
+    [[ $((nhosts % nc)) -eq 0 ]] && np=${nhosts} || np=$(echo "${nhosts}+${nc}-${nhosts}%${nc}" | bc)
     # Number of rows
     local nr
     nr=$((np / nc))
@@ -194,41 +194,41 @@ function main {
     local tmuxopts tp per
     for ((col = 1; col <= nc; col++)); do
         for ((row = 1; row <= nr; row++)); do
-            if [[ $col -eq 1 && $row -eq 1 ]]; then
-                if [ "$sn" != "" ]; then
+            if [[ ${col} -eq 1 && ${row} -eq 1 ]]; then
+                if [ "${sn}" != "" ]; then
                     # Use the current session
                     wi=$(mkWindowIndex)
                     tmuxopts=("new-window" "-t" "${sn}:${wi}")
                 else
                     # Make and use a new session
                     sn=$(mkSessionName)
-                    tmuxopts=("new-session" "-d" "-s" "$sn")
+                    tmuxopts=("new-session" "-d" "-s" "${sn}")
                 fi
-            elif [ "$col" -eq "1" ]; then
+            elif [ "${col}" -eq "1" ]; then
                 tp=$((row - 1))
-                per=$(calcPercent "$row" "$nr")
+                per=$(calcPercent "${row}" "${nr}")
                 tmuxopts=("split-window" "-t" "${sn}:${wi}.${tp}" "-v" "-l" "${per}%")
             else
                 tp=$((row * col - 1))
-                per=$(calcPercent "$col" "$nc")
+                per=$(calcPercent "${col}" "${nc}")
                 tmuxopts=("split-window" "-t" "${sn}:${wi}.${tp}" "-h" "-l" "${per}%")
             fi
             tmux "${tmuxopts[@]}" ssh "${sshopts[@]}" "${harr[$((hindex++))]}"
-            if [ "$wi" = "" ]; then
+            if [ "${wi}" = "" ]; then
                 wi=$(tmux display-message -p '#{window_index}')
             fi
             ((npanes++))
-            if [ "$npanes" -eq "$nhosts" ]; then
+            if [ "${npanes}" -eq "${nhosts}" ]; then
                 break
             fi
         done
     done
 
-    tmux rename-window "$CLUSTER"
-    tmux set-window-option -t "$sn" synchronize-panes on
+    tmux rename-window "${CLUSTER}"
+    tmux set-window-option -t "${sn}" synchronize-panes on
 
-    if [ "$TMUX" = "" ]; then
-        tmux attach -t "$sn"
+    if [ "${TMUX}" = "" ]; then
+        tmux attach -t "${sn}"
     fi
 }
 readConfig
@@ -290,12 +290,12 @@ if [ ${#HOSTS[@]} -eq 1 ]; then
         # Must be a cluster name
         CLUSTER=${HOSTS[0]}
     fi
-    HOSTS_STRING="$(sed -n "s/^$CLUSTER //p" <"${CONFIG["cluster_file"]}")"
-    if [ "$HOSTS_STRING" = "" ]; then
-        echo "Cluster $CLUSTER not found in ${CONFIG["cluster_file"]}"
+    HOSTS_STRING="$(sed -n "s/^${CLUSTER} //p" <"${CONFIG["cluster_file"]}")"
+    if [ "${HOSTS_STRING}" = "" ]; then
+        echo "Cluster ${CLUSTER} not found in ${CONFIG["cluster_file"]}"
         exit 2
     fi
-    HOSTS=("$HOSTS_STRING")
+    HOSTS=("${HOSTS_STRING}")
 fi
 
 # Remove excluded HOSTS
@@ -308,9 +308,9 @@ for host in "${HOSTS[@]}"; do
             break
         fi
     done
-    if [ "$exclude" = "" ]; then
+    if [ "${exclude}" = "" ]; then
         WANTEDHOSTS="${WANTEDHOSTS} ${host}"
     fi
 done
 
-main "$WANTEDHOSTS" "${CONFIG["ssh_options"]}"
+main "${WANTEDHOSTS}" "${CONFIG["ssh_options"]}"
