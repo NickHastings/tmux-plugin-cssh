@@ -282,7 +282,7 @@ fi
 
 log "Number of hosts is ${#HOSTS}"
 if [ ${#HOSTS[@]} -eq 1 ]; then
-    # Single host, must actually a cluster name or index. Get HOSTS from cluster
+    # Single host, must actually be a cluster name or index. Get HOSTS from cluster
     if [[ ${HOSTS[0]} =~ ^[0-9]+$ ]]; then
         # Is an integer, must be an index
         CLUSTER=$(clusterByNumber "${HOSTS[0]}")
