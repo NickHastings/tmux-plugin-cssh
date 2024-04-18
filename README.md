@@ -20,9 +20,9 @@ Usage: tcssh [options] [host1 [host2 [host3... ]]]
 
 Cluster ssh using tmux. This differs from other similar scripts by
 allowing the user to define the layout by specifying the number of
-columns instead of just using the tmux "tiled" layout. The hosts 
+columns instead of just using the tmux "tiled" layout. The hosts
 to ssh to can either be explicitly given on the commandline or by
-the cluster index with the -i/--cluster-index option. The cluster
+the cluster name or index with the -i/--cluster option. The cluster
 index can be optained with the -l/--list option.
 
 Options:
@@ -37,7 +37,7 @@ Options:
 
   -l, --list           List available clusters.
 
-  -i, --cluster-index  Index of the  desired cluster
+  -i, --cluster        Name or index of the desired cluster
 
   -m, --menu           Open tmux menu of clusters (run inside tmux session).
 
