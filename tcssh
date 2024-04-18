@@ -61,7 +61,7 @@ function log {
     if [ "${CONFIG["debug"]}" = "0" ]; then
         return
     fi
-    logger -t "${PROG}" -p user.debug "$@"
+    logger -t "${PROG}" -p user.debug -- "$@"
 }
 function listClusters {
     local clusters
