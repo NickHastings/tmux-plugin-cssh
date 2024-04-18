@@ -75,9 +75,10 @@ function clusterMenu {
     local clusters
     read -ra clusters <<<"$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}' | tr '\n' ' ')"
     local args
+    declare -a keys=({1..9} 0 {a..z})
     for ((i = 0; i < ${#clusters[@]}; i++)); do
         args+=("${clusters[$i]}")
-        args+=("$i")
+        args+=("${keys[i]}")
         args+=("run \"${SCRIPT_PATH} --cluster-index $((i + 1))\"")
     done
     tmux display-menu -T "Cluster SSH" "${args[@]}"
