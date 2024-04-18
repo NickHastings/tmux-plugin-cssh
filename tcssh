@@ -28,14 +28,14 @@ done
 SCRIPT_PATH="$(readlink -f "${SCRIPT_PATH}")"
 
 usage() {
-    echo "Usage: $PROG [options] [host1 [host2 [host3... ]]]
+    echo "Usage: $PROG [options] <cluster|host1 [host2 [host3... ]]>
 
 Cluster ssh using tmux. This differs from other similar scripts by
 allowing the user to define the layout by specifying the number of
 columns instead of just using the tmux \"tiled\" layout. The hosts
 to ssh to can either be explicitly given on the commandline or by
-the cluster name or index with the -i/--cluster option. The cluster
-index can be optained with the -l/--list option.
+the cluster name or index. The cluster name and/or index can be 
+obtained with the -l/--list option.
 
 Options:
 
@@ -48,8 +48,6 @@ Options:
                        Defaults to ${CONFIG["cluster_file"]}.
 
   -l, --list           List available clusters.
-
-  -i, --cluster        Name or index of the desired cluster.
 
   -m, --menu           Open tmux menu of clusters (run inside tmux session).
 
@@ -80,7 +78,7 @@ function clusterMenu {
     for ((i = 0; i < ${#clusters[@]}; i++)); do
         args+=("${clusters[$i]}")
         args+=("${keys[i]}")
-        args+=("run \"${SCRIPT_PATH} --cluster $((i + 1))\"")
+        args+=("run \"${SCRIPT_PATH} $((i + 1))\"")
     done
     tmux display-menu -T "Cluster SSH" "${args[@]}"
 }
@@ -233,11 +231,9 @@ function main {
         tmux attach -t "$sn"
     fi
 }
-log "$@"
-CLUSTER=""
-HOSTS=""
 readConfig
 declare -a excludes
+declare -a HOSTS
 while [ "$1" != "" ]; do
     log "\$1 is $1"
     case $1 in
@@ -272,40 +268,39 @@ while [ "$1" != "" ]; do
         usage
         exit 0
         ;;
-    -i | --cluster)
-        CLUSTER=$2
-        shift
-        if [[ $CLUSTER =~ ^[0-9]+$ ]]; then
-            CLUSTER=$(clusterByNumber $((CLUSTER)))
-            if [ "$?" != "0" ]; then
-                exit $?
-            fi
-        fi
-        ;;
     *)
-        HOSTS="$HOSTS $1"
+        HOSTS+=("$1")
         ;;
     esac
     shift
 done
 
-if [ "$CLUSTER" = "" ] && [ "$HOSTS" = "" ]; then
+if [ ${#HOSTS} -lt 1 ]; then
     usage
     exit 1
 fi
 
-if [ "$HOSTS" = "" ]; then
-    # Get HOSTS from cluster name
-    HOSTS="$(sed -n "s/^$CLUSTER //p" <"${CONFIG["cluster_file"]}")"
-    if [ "$HOSTS" = "" ]; then
+log "Number of hosts is ${#HOSTS}"
+if [ ${#HOSTS[@]} -eq 1 ]; then
+    # Single host, must actually a cluster name or index. Get HOSTS from cluster
+    if [[ ${HOSTS[0]} =~ ^[0-9]+$ ]]; then
+        # Is an integer, must be an index
+        CLUSTER=$(clusterByNumber "${HOSTS[0]}")
+    else
+        # Must be a cluster name
+        CLUSTER=${HOSTS[0]}
+    fi
+    HOSTS_STRING="$(sed -n "s/^$CLUSTER //p" <"${CONFIG["cluster_file"]}")"
+    if [ "$HOSTS_STRING" = "" ]; then
         echo "Cluster $CLUSTER not found in ${CONFIG["cluster_file"]}"
         exit 2
     fi
+    HOSTS=("$HOSTS_STRING")
 fi
 
 # Remove excluded HOSTS
 WANTEDHOSTS=""
-for host in $HOSTS; do
+for host in "${HOSTS[@]}"; do
     exclude=""
     for exhost in "${excludes[@]}"; do
         if [ "${exhost%%.*}" = "${host%%.*}" ]; then
@@ -314,7 +309,7 @@ for host in $HOSTS; do
         fi
     done
     if [ "$exclude" = "" ]; then
-        WANTEDHOSTS="${WANTEDHOSTS}${host} "
+        WANTEDHOSTS="${WANTEDHOSTS} ${host}"
     fi
 done
 

@@ -16,14 +16,14 @@ clustername user@host1 otheruser@host2 host3 ...
 ```
 ### Usage
 ```
-Usage: tcssh [options] [host1 [host2 [host3... ]]]
+Usage: tcssh [options] <cluster|host1 [host2 [host3... ]]>
 
 Cluster ssh using tmux. This differs from other similar scripts by
 allowing the user to define the layout by specifying the number of
 columns instead of just using the tmux "tiled" layout. The hosts
 to ssh to can either be explicitly given on the commandline or by
-the cluster name or index with the -i/--cluster option. The cluster
-index can be optained with the -l/--list option.
+the cluster name or index. The cluster name and/or index can be
+obtained with the -l/--list option.
 
 Options:
 
@@ -33,11 +33,9 @@ Options:
                        Defaults to 2.
 
   -f <file>            Location of the cluster configuration file.
-                       Defaults to /home/hastings/.clusterssh/clusters.
+                       Defaults to ~/.clusterssh/clusters.
 
   -l, --list           List available clusters.
-
-  -i, --cluster        Name or index of the desired cluster
 
   -m, --menu           Open tmux menu of clusters (run inside tmux session).
 
@@ -45,7 +43,7 @@ Options:
                        the short hostname is comapared.
 
   -h, --help           Print this screen.
-````
+```
 
 ### Installation
 
