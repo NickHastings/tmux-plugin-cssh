@@ -177,7 +177,7 @@ function main {
     fi
     local wi=""
 
-    # Number of panes needs to be >= nHOSTS and divisible by the number of columns
+    # Number of panes needs to be >= nhosts and divisible by the number of columns
     local np
     [[ $((nhosts % nc)) -eq 0 ]] && np=$nhosts || np=$(echo "$nhosts+$nc-$nhosts%$nc" | bc)
     # Number of rows
