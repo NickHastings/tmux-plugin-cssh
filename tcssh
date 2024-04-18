@@ -15,9 +15,10 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 PROG=${0##*/}
-DEBUG=0
-CLUSTERFILE="${HOME}/.clusterssh/clusters"
-NCOL="2"
+declare -A CONFIG=(["columns"]="2"
+                  ["cluster_file"]="${HOME}/.clusterssh/clusters"
+                  ["debug"]="1"
+                  ["ssh_options"]="")
 SCRIPT_PATH="${BASH_SOURCE[0]}"
 while [ -L "${SCRIPT_PATH}" ]; do
     SCRIPT_DIR="$(cd -P "$(dirname "${SCRIPT_PATH}")" >/dev/null 2>&1 && pwd)"
@@ -44,7 +45,7 @@ Options:
                        Defaults to 2.
 
   -f <file>            Location of the cluster configuration file.
-                       Defaults to ${CLUSTERFILE}.
+                       Defaults to ${CONFIG["cluster_file"]}.
 
   -l, --list           List available clusters.
 
@@ -59,27 +60,27 @@ Options:
 "
 }
 function log {
-    if [ "$DEBUG" = "0" ]; then
+    if [ "${CONFIG["debug"]}" = "0" ]; then
         return
     fi
     logger -t "${PROG}" -p user.debug "$@"
 }
 function listClusters {
     local clusters
-    read -ra clusters <<<"$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}' | tr '\n' ' ')"
+    read -ra clusters <<<"$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CONFIG["cluster_file"]}" | awk '{print $1}' | tr '\n' ' ')"
     for ((i = 0; i < ${#clusters[@]}; i++)); do
         printf "%2d. %s\n" $((i + 1)) "${clusters[$i]}"
     done
 }
 function clusterMenu {
     local clusters
-    read -ra clusters <<<"$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}' | tr '\n' ' ')"
+    read -ra clusters <<<"$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CONFIG["cluster_file"]}" | awk '{print $1}' | tr '\n' ' ')"
     local args
     declare -a keys=({1..9} 0 {a..z})
     for ((i = 0; i < ${#clusters[@]}; i++)); do
         args+=("${clusters[$i]}")
         args+=("${keys[i]}")
-        args+=("run \"${SCRIPT_PATH} --cluster-index $((i + 1))\"")
+        args+=("run \"${SCRIPT_PATH} --cluster $((i + 1))\"")
     done
     tmux display-menu -T "Cluster SSH" "${args[@]}"
 }
@@ -87,7 +88,7 @@ function clusterMenu {
 function clusterByNumber {
     local i=$1
     local clusters
-    read -ra clusters <<<"$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CLUSTERFILE}" | awk '{print $1}' | tr '\n' ' ')"
+    read -ra clusters <<<"$(grep '^[[:blank:]]*[^[:blank:]#;]' "${CONFIG["cluster_file"]}" | awk '{print $1}' | tr '\n' ' ')"
     if [[ $i -lt 1 || $i -gt ${#clusters[@]} ]]; then
         echo "Invalid cluster index $1." 1>&2
         echo "None"
@@ -144,14 +145,20 @@ function mkWindowIndex {
 }
 
 function readConfig {
-    local columns=""
+    local value
     log "Reading config"
-    columns="$(tmux show-option -gv '@tmux_cssh_columns')"
-    log "Got columns = ${columns} from config"
-    if [ "$columns" != "" ]; then
-        NCOL="$columns"
-        log "Set NCOL to $columns"
-    fi
+    for key in "${!CONFIG[@]}" ; do
+        value="$(tmux show-option -gv "@tmux_cssh_${key}" 2>/dev/null)"
+        log "Got $key = $value from config"
+        # If substring "file" is in variable expand ~ to $HOME
+        if [[ "$key" == *"file"* ]]; then
+            value="${value/#~/$HOME}"
+        fi
+        if [ "$value" != "" ]; then
+            CONFIG["${key}"]="$value"
+            value=""
+        fi
+    done
 }
 function main {
     log "main()"
@@ -162,7 +169,7 @@ function main {
     read -ra sshopts <<<"$2"
     log "sshopts =" "${sshopts[@]}"
 
-    local nc="$NCOL"
+    local nc="${CONFIG["columns"]}"
     log "nc = $nc"
     local hindex=0
     local nhosts=${#harr[@]}
@@ -227,7 +234,6 @@ function main {
     fi
 }
 log "$@"
-SSHOPTS=""
 CLUSTER=""
 HOSTS=""
 readConfig
@@ -236,12 +242,15 @@ while [ "$1" != "" ]; do
     log "\$1 is $1"
     case $1 in
     -s)
-        SSHOPTS="$2"
+        CONFIG["ssh_options"]="$2"
         shift
         ;;
     -c)
-        NCOL="$2"
-        log "Setting NCOL to $COLUMNS"
+        CONFIG["columns"]="$2"
+        shift
+        ;;
+    -f)
+        CONFIG["cluster_file"]="$2"
         shift
         ;;
     -l | --list)
@@ -257,7 +266,7 @@ while [ "$1" != "" ]; do
         shift
         ;;
     -d | --debug)
-        DEBUG=1
+        CONFIG["debug"]="$2"
         ;;
     -h | --help)
         usage
@@ -287,9 +296,9 @@ fi
 
 if [ "$HOSTS" = "" ]; then
     # Get HOSTS from cluster name
-    HOSTS="$(sed -n "s/^$CLUSTER //p" <"${CLUSTERFILE}")"
+    HOSTS="$(sed -n "s/^$CLUSTER //p" <"${CONFIG["cluster_file"]}")"
     if [ "$HOSTS" = "" ]; then
-        echo "Cluster $CLUSTER not found in $CLUSTERFILE" 1>&2
+        echo "Cluster $CLUSTER not found in ${CONFIG["cluster_file"]}"
         exit 2
     fi
 fi
@@ -309,4 +318,4 @@ for host in $HOSTS; do
     fi
 done
 
-main "$WANTEDHOSTS" "$SSHOPTS"
+main "$WANTEDHOSTS" "${CONFIG["ssh_options"]}"

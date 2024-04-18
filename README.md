@@ -66,9 +66,12 @@ set -g @tmux_cssh_launch 'z'
 When launched this way within tmux you will be presented with a menu of clusters
 read from the configuration file. Select the desired cluster to ssh to its hosts.
 
-The number of columns can optinally be set in the tmux.conf. For example
+A number of variables can optionally be set in the tmux.conf. For example
 ```
-set -g @tmux_cssh_columns 3
+set -g @tmux_cssh_columns '3'
+set -g @tmux_cssh_cluster_file '~/.config/tmux/clusters'
+set -g @tmux_cssh_debug '1'
+set -g @tmux_cssh_ssh_options '-l nickh'
 ```
 ## Licensing
 tmux-plugin-cssh is released under the GNU General Public License v3.0 only.
