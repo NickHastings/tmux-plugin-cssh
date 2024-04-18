@@ -166,6 +166,9 @@ function main {
     log "nc = $nc"
     local hindex=0
     local nhosts=${#harr[@]}
+    if [ "$nhosts" -lt "$nc" ]; then
+        nc=$nhosts
+    fi
     local sn=""
 
     # Check if we are already in a tmux session
