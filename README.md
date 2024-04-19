@@ -1,11 +1,14 @@
 ## tmux-plugin-cssh
 
-Cluster ssh using tmux. This differs from other similar scripts by
-allowing the user to define the layout by specifying the number of
-columns instead of just using the tmux "tiled" layout.
+Cluster ssh using tmux. This differs from other similar scripts in two main ways
+
+1. Is launched within tmux, with the hosts to ssh to "the cluster" selected from a menu
+2. The user defines the layout by specifying the number of columns instead of just using the tmux "tiled" layout.
 
 Clusters are defined in a config file, by default `~/.clusterssh/clusters`.
 The format is the same as used by [clusterssh](https://github.com/duncs/clusterssh/wiki) (see below).
+
+Although the script should normally be invoked with a keybinding within tmux it can also be run directly from the commandline.
 ### Usage
 ```
 Usage: tcssh [options] <cluster|host1 [host2 [host3... ]]>
