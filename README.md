@@ -4,16 +4,8 @@ Cluster ssh using tmux. This differs from other similar scripts by
 allowing the user to define the layout by specifying the number of
 columns instead of just using the tmux "tiled" layout.
 
-Clusters are defined in the users ~/.clusterssh/clusters file as is the case for
-[clusterssh](https://github.com/duncs/clusterssh/wiki). The format
-is one cluster per line in the format:
-```
-clustername host1 host2 host3 ...
-```
-Usernames can optionally be prepended to the host name. Eg:
-```
-clustername user@host1 otheruser@host2 host3 ...
-```
+Clusters are defined in a config file, by default `~/.clusterssh/clusters`.
+The format is the same as used by [clusterssh](https://github.com/duncs/clusterssh/wiki) (see below).
 ### Usage
 ```
 Usage: tcssh [options] <cluster|host1 [host2 [host3... ]]>
@@ -64,12 +56,23 @@ set -g @tmux_cssh_launch 'z'
 When launched this way within tmux you will be presented with a menu of clusters
 read from the configuration file. Select the desired cluster to ssh to its hosts.
 
+### Configuration
 A number of variables can optionally be set in the tmux.conf. For example
 ```
 set -g @tmux_cssh_columns '3'
 set -g @tmux_cssh_cluster_file '~/.config/tmux/clusters'
 set -g @tmux_cssh_debug '1'
 set -g @tmux_cssh_ssh_options '-l nickh'
+````
+
+Clusters (lists of hosts) can be defined in a `cluster_file`. The default location is `~/.clusterssh/clusters`. A `clusters` file might look like:
+```
+# Gotta pay the bills
+workweb web01.bigbucks.com web02.bigbucks.com web03.bigbucks.com
+workdisk admin@data0.bigbucks.com admin@data1.bigbucks.com
+
+# Home machines
+homelab pihole webserver jellyfin
 ```
 ## Licensing
 tmux-plugin-cssh is released under the GNU General Public License v3.0 only.
