@@ -16,7 +16,7 @@
 
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-LAUNCH_KEY="$(tmux show-option -gv '@tmux_cssh_launch')"
+LAUNCH_KEY="$(tmux show-option -gv '@tmux_cssh_launch' 2>/dev/null)"
 
 if [ -z "$LAUNCH_KEY" ]; then
     LAUNCH_KEY="C"
