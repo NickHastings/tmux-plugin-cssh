@@ -10,7 +10,7 @@ The format is the same as used by [clusterssh](https://github.com/duncs/clusters
 
 Although the script should normally be invoked with a keybinding within tmux it can also be run directly from the commandline.
 ### Usage
-The plugin can be invoked with a keybinding from within tmux as described in the [installation section](###Installation), or by running `tcssh` from the commandline. Commandline usage is given here.
+The plugin can be invoked with a keybinding from within tmux as described in the [installation section](#installation), or by running `tcssh` from the commandline. Commandline usage is given here.
 ```
 Usage: tcssh [options] <cluster|host1 [host2 [host3... ]]>
 
