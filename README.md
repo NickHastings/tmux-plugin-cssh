@@ -3,7 +3,7 @@
 Cluster ssh using tmux. This differs from other similar scripts in two main ways
 
 1. Is launched within tmux, with the hosts to ssh to "the cluster" selected from a menu
-2. The user defines the layout by specifying the number of columns instead of just using the tmux "tiled" layout.
+2. The user defines the layout by specifying the number of columns using the tmux tiled-layout-max-columns option (as such requires tmux 3.6 or newer).
 
 Clusters are defined in a config file, by default `~/.clusterssh/clusters`.
 The format is the same as used by [clusterssh](https://github.com/duncs/clusterssh/wiki) (see below).
